@@ -10,17 +10,20 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 ###########################################
 
 import matplotlib.pyplot as pl
+
 import numpy as np
-import sklearn.learning_curve as curves
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.cross_validation import ShuffleSplit, train_test_split
+from sklearn.model_selection import ShuffleSplit, train_test_split, learning_curve, validation_curve
+# WK:  updated module from cross_validation to model_selection for Python 3
+# Removed preselected colors in lieu of matplotlib theme for ease of readability
+
 
 def ModelLearning(X, y):
     """ Calculates the performance of several models with varying sizes of training data.
         The learning and testing scores for each model are then plotted. """
     
-    # Create 10 cross-validation sets for training and testing
-    cv = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.2, random_state = 0)
+    # Create 10 sets for training and testing
+    cv = ShuffleSplit(X.shape[0], test_size = 0.2, random_state = 0)
 
     # Generate the training set sizes increasing by 50
     train_sizes = np.rint(np.linspace(1, X.shape[0]*0.8 - 1, 9)).astype(int)
@@ -35,7 +38,7 @@ def ModelLearning(X, y):
         regressor = DecisionTreeRegressor(max_depth = depth)
 
         # Calculate the training and testing scores
-        sizes, train_scores, test_scores = curves.learning_curve(regressor, X, y, \
+        sizes, train_scores, test_scores = learning_curve(regressor, X, y, \
             cv = cv, train_sizes = train_sizes, scoring = 'r2')
         
         # Find the mean and standard deviation for smoothing
@@ -46,12 +49,12 @@ def ModelLearning(X, y):
 
         # Subplot the learning curve 
         ax = fig.add_subplot(2, 2, k+1)
-        ax.plot(sizes, train_mean, 'o-', color = 'r', label = 'Training Score')
-        ax.plot(sizes, test_mean, 'o-', color = 'g', label = 'Testing Score')
+        ax.plot(sizes, train_mean, 'o-', label = 'Training Score')
+        ax.plot(sizes, test_mean, 'o-', label = 'Testing Score')
         ax.fill_between(sizes, train_mean - train_std, \
-            train_mean + train_std, alpha = 0.15, color = 'r')
+            train_mean + train_std, alpha = 0.15)
         ax.fill_between(sizes, test_mean - test_std, \
-            test_mean + test_std, alpha = 0.15, color = 'g')
+            test_mean + test_std, alpha = 0.15)
         
         # Labels
         ax.set_title('max_depth = %s'%(depth))
@@ -72,13 +75,13 @@ def ModelComplexity(X, y):
         The learning and testing errors rates are then plotted. """
     
     # Create 10 cross-validation sets for training and testing
-    cv = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.2, random_state = 0)
+    cv = ShuffleSplit(X.shape[0], test_size = 0.2, random_state = 0)
 
     # Vary the max_depth parameter from 1 to 10
     max_depth = np.arange(1,11)
 
     # Calculate the training and testing scores
-    train_scores, test_scores = curves.validation_curve(DecisionTreeRegressor(), X, y, \
+    train_scores, test_scores = validation_curve(DecisionTreeRegressor(), X, y, \
         param_name = "max_depth", param_range = max_depth, cv = cv, scoring = 'r2')
 
     # Find the mean and standard deviation for smoothing
@@ -90,12 +93,12 @@ def ModelComplexity(X, y):
     # Plot the validation curve
     pl.figure(figsize=(7, 5))
     pl.title('Decision Tree Regressor Complexity Performance')
-    pl.plot(max_depth, train_mean, 'o-', color = 'r', label = 'Training Score')
-    pl.plot(max_depth, test_mean, 'o-', color = 'g', label = 'Validation Score')
+    pl.plot(max_depth, train_mean, 'o-', label = 'Training Score')
+    pl.plot(max_depth, test_mean, 'o-', label = 'Validation Score')
     pl.fill_between(max_depth, train_mean - train_std, \
-        train_mean + train_std, alpha = 0.15, color = 'r')
+        train_mean + train_std, alpha = 0.15)
     pl.fill_between(max_depth, test_mean - test_std, \
-        test_mean + test_std, alpha = 0.15, color = 'g')
+        test_mean + test_std, alpha = 0.15)
     
     # Visual aesthetics
     pl.legend(loc = 'lower right')
